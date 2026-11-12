@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>모임 회비 정산기</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Pretendard", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 16px; max-width: 640px; margin: 0 auto; padding-bottom: 60px; }
+    h1 { font-size: 1.4rem; text-align: center; margin-bottom: 16px; font-weight: 800; }
+
+    /* 잔액 대시보드 */
+    .dashboard { background: linear-gradient(135deg, #1e3a8a, #2563eb); color: #fff; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2); }
+    .base-balance-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 0.9rem; opacity: 0.95; gap: 8px; }
+    .base-balance-row input { width: 150px; padding: 6px 10px; border-radius: 8px; border: none; text-align: right; font-weight: 700; font-size: 0.95rem; color: #1e293b; }
+    .current-balance-label { font-size: 0.85rem; opacity: 0.85; margin-bottom: 4px; }
+    .current-balance-value { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 16px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: rgba(255,255,255,0.12); padding: 12px; border-radius: 12px; text-align: center; font-size: 0.8rem; }
+    .summary-grid strong { display: block; font-size: 0.95rem; margin-top: 4px; }
+
+    /* 탭 메뉴 */
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+    .tab-btn { padding: 12px 8px; border: 1px solid var(--border); background: var(--card); border-radius: 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer; color: #64748b; transition: all 0.2s; }
+    .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+
+    /* 입력 폼 카드 */
+    .card { background: var(--card); border-radius: 16px; padding: 18px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+    .form-group { margin-bottom: 12px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label { display: block; font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 6px; }
+    input, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 0.95rem; background: #fff; }
+    input:focus, select:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+    /* 카메라 & 사진 선택 버튼 */
+    .photo-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .photo-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border: 1.5px dashed var(--primary); border-radius: 10px; background: #eff6ff; color: var(--primary); font-weight: 700; font-size: 0.88rem; cursor: pointer; text-align: center; }
+    .photo-preview { display: none; margin-top: 8px; position: relative; }
+    .photo-preview img { width: 100%; max-height: 220px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border); background: #f1f5f9; }
+    .remove-photo { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.65); color: #fff; border: none; border-radius: 20px; padding: 4px 10px; font-size: 0.75rem; cursor: pointer; }
+
+    .submit-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: #fff; font-weight: 800; font-size: 1rem; cursor: pointer; margin-top: 6px; }
+    .submit-btn:active { transform: scale(0.99); }
+
+    /* 내역 리스트 */
+    .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .list-header h2 { font-size: 1.1rem; font-weight: 800; }
+    .util-btns { display: flex; gap: 6px; }
+    .util-btn { padding: 6px 10px; font-size: 0.78rem; font-weight: 700; border-radius: 8px; border: 1px solid var(--border); background: #fff; cursor: pointer; color: #334155; }
+    .history-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .item-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 800; white-space: nowrap; }
+    .badge.receipt { background: #dbeafe; color: #1d4ed8; }
+    .badge.transfer { background: #fef3c7; color: #b45309; }
+    .badge.sponsor { background: #dcfce7; color: #15803d; }
+    .item-info { flex: 1; }
+    .item-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .item-category { font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+    .item-date { font-size: 0.78rem; color: #94a3b8; }
+    .item-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); cursor: pointer; }
+    .item-right { text-align: right; }
+    .item-amount { font-weight: 800; font-size: 1rem; }
+    .item-amount.minus { color: var(--danger); }
+    .item-amount.plus { color: var(--success); }
+    .delete-btn { background: none; border: none; color: #94a3b8; font-size: 0.75rem; cursor: pointer; margin-top: 4px; text-decoration: underline; }
+    .empty-msg { text-align: center; color: #94a3b8; padding: 30px 0; font-size: 0.9rem; }
+
+    /* 영수증 원본 모달 */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
+    .modal img { max-width: 100%; max-height: 85vh; border-radius: 12px; }
+  </style>
+</head>
+<body>
+
+  <h1>📋 모임 회비 정산기</h1>
+
+  <!-- 1. 통장 잔액 대시보드 -->
+  <div class="dashboard">
+    <div class="base-balance-row">
+      <span>🏦 통장 기초(초기) 금액</span>
+      <div>
+        <input type="number" id="baseBalanceInput" placeholder="0" oninput="updateBaseBalance(this.value)"> 원
+      </div>
+    </div>
+    <div class="current-balance-label">실시간 통장 잔액</div>
+    <div class="current-balance-value" id="currentBalanceDisplay">0원</div>
+    <div class="summary-grid">
+      <div>영수증 지출<strong id="sumReceipt">0원</strong></div>
+      <div>계좌이체 지출<strong id="sumTransfer">0원</strong></div>
+      <div>찬조 내역<strong id="sumSponsor">0원</strong></div>
+    </div>
+  </div>
+
+  <!-- 2. 입력 탭 선택 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('receipt')">🧾 영수증 등록</button>
+    <button class="tab-btn" onclick="switchTab('transfer')">💸 계좌이체</button>
+    <button class="tab-btn" onclick="switchTab('sponsor')">🎁 찬조 등록</button>
+  </div>
+
+  <!-- 3. 입력 폼 영역 -->
+  <div class="card">
+    <!-- (1) 영수증 폼 -->
+    <form id="form-receipt" class="form-section active" onsubmit="addReceipt(event)">
+      <div class="form-group">
+        <label>영수증 사진 첨부 (선택)</label>
+        <div class="photo-btns">
+          <label class="photo-btn">
+            📷 카메라 바로 찍기
+            <input type="file" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
+          </label>
+          <label class="photo-btn">
+            🖼️ 앨범에서 사진 선택
+            <input type="file" accept="image/*" style="display:none" onchange="handlePhoto(event)">
+          </label>
+        </div>
+        <div class="photo-preview" id="photoPreviewBox">
+          <img id="photoPreviewImg" src="" alt="영수증 미리보기">
+          <button type="button" class="remove-photo" onclick="clearPhoto()">삭제 ✕</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>날짜</label>
+          <input type="date" id="rDate" required>
+        </div>
+        <div class="form-group">
+          <label>시간</label>
+          <input type="time" id="rTime" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>분류</label>
+          <select id="rCategory">
+            <option value="식사">🍚 식사</option>
+            <option value="카페">☕ 카페</option>
+            <option value="장보기">🛒 장보기</option>
+            <option value="숙박/대관">🏠 숙박/대관</option>
+            <option value="주류/회식">🍺 주류/회식</option>
+            <option value="기타">🎸 기타</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>사용처 (상호명)</label>
+          <input type="text" id="rPlace" placeholder="예: 등촌샤브칼국수" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>결제 금액 (통장 잔액에서 차감)</label>
+        <input type="number" id="rAmount" placeholder="금액 입력 (원)" required>
+      </div>
+
+      <button type="submit" class="submit-btn">영수증 내역 추가 (-차감)</button>
+    </form>
+
+    <!-- (2) 계좌이체 폼 -->
+    <form id="form-transfer" class="form-section" onsubmit="addTransfer(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>이체 날짜</label>
+          <input type="date" id="tDate" required>
+        </div>
+        <div class="form-group">
+          <label>분류</label>
+          <select id="tCategory">
+            <option value="식사">🍚 식사</option>
+            <option value="카페">☕ 카페</option>
+            <option value="장보기">🛒 장보기</option>
+            <option value="숙박/대관">🏠 숙박/대관</option>
+            <option value="환불/정산">💳 환불/정산</option>
+            <option value="기타">🎸 기타</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>사용처 / 받는 분</label>
+        <input type="text" id="tPlace" placeholder="예: 펜션 선입금, 홍길동 더치페이" required>
+      </div>
+
+      <div class="form-group">
+        <label>이체 금액 (통장 잔액에서 차감)</label>
+        <input type="number" id="tAmount" placeholder="금액 입력 (원)" required>
+      </div>
+
+      <button type="submit" class="submit-btn">계좌이체 내역 추가 (-차감)</button>
+    </form>
+
+    <!-- (3) 찬조 폼 -->
+    <form id="form-sponsor" class="form-section" onsubmit="addSponsor(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>날짜</label>
+          <input type="date" id="sDate" required>
+        </div>
+        <div class="form-group">
+          <label>찬조자 이름 / 내역</label>
+          <input type="text" id="sName" placeholder="예: 김성기 총무님 찬조" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>잔액 반영 방식</label>
+          <select id="sSign">
+            <option value="minus">차감 (-) : 통장에서 지출/제외</option>
+            <option value="plus">입금 (+) : 통장 잔액에 합산</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>찬조 금액</label>
+          <input type="number" id="sAmount" placeholder="금액 입력 (원)" required>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn">찬조 내역 추가</button>
+    </form>
+  </div>
+
+  <!-- 4. 입출금 내역 리스트 -->
+  <div class="list-header">
+    <h2>📊 상세 정산 내역</h2>
+    <div class="util-btns">
+      <button class="util-btn" onclick="copyKakaoSummary()">💬 카톡 정산서 복사</button>
+      <button class="util-btn" onclick="exportCSV()">📥 엑셀(CSV) 저장</button>
+      <button class="util-btn" onclick="resetAll()">🗑️ 초기화</button>
+    </div>
+  </div>
+  <div id="historyList"></div>
+
+  <!-- 영수증 확대 모달 -->
+  <div class="modal" id="imgModal" onclick="this.style.display='none'">
+    <img id="modalImg" src="" alt="영수증 원본">
+  </div>
+
+  <script>
+    let state = {
+      baseBalance: 0,
+      items: []
+    };
+    let currentPhotoData = null;
+
+    // 초기 로드 및 오늘 날짜/시간 세팅
+    window.onload = () => {
+      const saved = localStorage.getItem('club_ledger_v1');
+      if (saved) {
+        state = JSON.parse(saved);
+        document.getElementById('baseBalanceInput').value = state.baseBalance || '';
+      }
+      setDefaultDateTime();
+      render();
+    };
+
+    function setDefaultDateTime() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const today = `${yyyy}-${mm}-${dd}`;
+
+      document.getElementById('rDate').value = today;
+      document.getElementById('rTime').value = `${hh}:${min}`;
+      document.getElementById('tDate').value = today;
+      document.getElementById('sDate').value = today;
+    }
+
+    function saveState() {
+      localStorage.setItem('club_ledger_v1', JSON.stringify(state));
+      render();
+    }
+
+    function updateBaseBalance(val) {
+      state.baseBalance = Number(val) || 0;
+      saveState();
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        const targets = ['receipt', 'transfer', 'sponsor'];
+        btn.classList.toggle('active', targets[idx] === tab);
+      });
+      document.querySelectorAll('.form-section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(`form-${tab}`).classList.add('active');
+    }
+
+    // 사진 리사이즈 및 압축 (브라우저 용량 초과 방지)
+    function handlePhoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxW = 800;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          currentPhotoData = canvas.toDataURL('image/jpeg', 0.7);
+          document.getElementById('photoPreviewImg').src = currentPhotoData;
+          document.getElementById('photoPreviewBox').style.display = 'block';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearPhoto() {
+      currentPhotoData = null;
+      document.getElementById('photoPreviewBox').style.display = 'none';
+      document.getElementById('photoPreviewImg').src = '';
+    }
+
+    function addReceipt(e) {
+      e.preventDefault();
+      state.items.unshift({
+        id: Date.now(),
+        type: 'receipt',
+        date: document.getElementById('rDate').value,
+        time: document.getElementById('rTime').value,
+        category: document.getElementById('rCategory').value,
+        title: document.getElementById('rPlace').value,
+        amount: Number(document.getElementById('rAmount').value),
+        sign: 'minus',
+        photo: currentPhotoData
+      });
+      document.getElementById('rPlace').value = '';
+      document.getElementById('rAmount').value = '';
+      clearPhoto();
+      saveState();
+    }
+
+    function addTransfer(e) {
+      e.preventDefault();
+      state.items.unshift({
+        id: Date.now(),
+        type: 'transfer',
+        date: document.getElementById('tDate').value,
+        time: '',
+        category: document.getElementById('tCategory').value,
+        title: document.getElementById('tPlace').value,
+        amount: Number(document.getElementById('tAmount').value),
+        sign: 'minus',
+        photo: null
+      });
+      document.getElementById('tPlace').value = '';
+      document.getElementById('tAmount').value = '';
+      saveState();
+    }
+
+    function addSponsor(e) {
+      e.preventDefault();
+      state.items.unshift({
+        id: Date.now(),
+        type: 'sponsor',
+        date: document.getElementById('sDate').value,
+        time: '',
+        category: '찬조',
+        title: document.getElementById('sName').value,
+        amount: Number(document.getElementById('sAmount').value),
+        sign: document.getElementById('sSign').value,
+        photo: null
+      });
+      document.getElementById('sName').value = '';
+      document.getElementById('sAmount').value = '';
+      saveState();
+    }
+
+    function deleteItem(id) {
+      if (!confirm('이 내역을 삭제하시겠습니까?')) return;
+      state.items = state.items.filter(item => item.id !== id);
+      saveState();
+    }
+
+    function showModal(src) {
+      document.getElementById('modalImg').src = src;
+      document.getElementById('imgModal').style.display = 'flex';
+    }
+
+    function render() {
+      let receiptSum = 0;
+      let transferSum = 0;
+      let sponsorNet = 0;
+      let currentBalance = state.baseBalance;
+
+      state.items.forEach(item => {
+        if (item.type === 'receipt') {
+          receiptSum += item.amount;
+          currentBalance -= item.amount;
+        } else if (item.type === 'transfer') {
+          transferSum += item.amount;
+          currentBalance -= item.amount;
+        } else if (item.type === 'sponsor') {
+          if (item.sign === 'plus') {
+            sponsorNet += item.amount;
+            currentBalance += item.amount;
+          } else {
+            sponsorNet -= item.amount;
+            currentBalance -= item.amount;
+          }
+        }
+      });
+
+      document.getElementById('currentBalanceDisplay').textContent = currentBalance.toLocaleString() + '원';
+      document.getElementById('sumReceipt').textContent = '-' + receiptSum.toLocaleString() + '원';
+      document.getElementById('sumTransfer').textContent = '-' + transferSum.toLocaleString() + '원';
+      document.getElementById('sumSponsor').textContent = (sponsorNet >= 0 ? '+' : '') + sponsorNet.toLocaleString() + '원';
+
+      const listEl = document.getElementById('historyList');
+      if (state.items.length === 0) {
+        listEl.innerHTML = '<div class="empty-msg">아직 등록된 회비 내역이 없습니다.</div>';
+        return;
+      }
+
+      listEl.innerHTML = state.items.map(item => {
+        const badgeMap = {
+          receipt: '<span class="badge receipt">영수증</span>',
+          transfer: '<span class="badge transfer">계좌이체</span>',
+          sponsor: '<span class="badge sponsor">찬조</span>'
+        };
+        const signChar = item.sign === 'plus' ? '+' : '-';
+        const photoHtml = item.photo ? `<img src="${item.photo}" class="item-thumb" onclick="showModal('${item.photo}')" title="영수증 보기">` : '';
+
+        return `
+          <div class="history-item">
+            <div class="item-left">
+              ${photoHtml}
+              <div class="item-info">
+                <div class="item-title">
+                  ${badgeMap[item.type]}
+                  <span>${item.title}</span>
+                  <span class="item-category">${item.category}</span>
+                </div>
+                <div class="item-date">${item.date} ${item.time || ''}</div>
+              </div>
+            </div>
+            <div class="item-right">
+              <div class="item-amount ${item.sign}">${signChar}${item.amount.toLocaleString()}원</div>
+              <button class="delete-btn" onclick="deleteItem(${item.id})">삭제</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 카카오톡 공지용 텍스트 복사
+    function copyKakaoSummary() {
+      let currentBalance = state.baseBalance;
+      const lines = ['📋 [모임 회비 정산 내역]', `• 기초 통장 잔액: ${state.baseBalance.toLocaleString()}원`, ''];
+
+      [...state.items].reverse().forEach(item => {
+        const sign = item.sign === 'plus' ? '+' : '-';
+        currentBalance += (item.sign === 'plus' ? item.amount : -item.amount);
+        const typeLabel = item.type === 'receipt' ? '영수증' : (item.type === 'transfer' ? '계좌이체' : '찬조');
+        lines.push(`[${item.date}${item.time ? ' ' + item.time : ''}] (${typeLabel}/${item.category}) ${item.title}: ${sign}${item.amount.toLocaleString()}원`);
+      });
+
+      lines.push('', `💰 현재 통장 잔액: ${currentBalance.toLocaleString()}원`);
+      navigator.clipboard.writeText(lines.join('\n')).then(() => {
+        alert('카카오톡 공유용 정산 내역이 클립보드에 복사되었습니다!');
+      });
+    }
+
+    // CSV 다운로드
+    function exportCSV() {
+      let csv = '\uFEFF구분,날짜,시간,분류,사용처/이름,차감/입금,금액\n';
+      state.items.forEach(item => {
+        const typeLabel = item.type === 'receipt' ? '영수증' : (item.type === 'transfer' ? '계좌이체' : '찬조');
+        const signAmount = (item.sign === 'plus' ? '' : '-') + item.amount;
+        csv += `${typeLabel},${item.date},${item.time || '-'},${item.category},"${item.title}",${item.sign === 'plus' ? '입금(+)' : '차감(-)'},${signAmount}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `모임회비정산_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+    }
+
+    function resetAll() {
+      if (!confirm('모든 회비 내역을 초기화하시겠습니까?')) return;
+      state = { baseBalance: 0, items: [] };
+      document.getElementById('baseBalanceInput').value = '';
+      saveState();
+    }
+  </script>
+</body>
+</html>
