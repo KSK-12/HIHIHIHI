@@ -42,4 +42,674 @@
     .form-section.active { display: block; }
     .form-group { margin-bottom: 14px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    label { display:
+    label { display: block; font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 6px; }
+    input, select { width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 0.95rem; background: #fff; transition: all 0.25s; }
+    input:focus, select:focus { outline: 2px solid var(--primary); border-color: transparent; }
+    .auto-filled { background-color: #dcfce7 !important; border-color: #16a34a !important; font-weight: 800; color: #15803d; }
+
+    /* 카메라 & 사진 선택 버튼 */
+    .photo-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .photo-btn { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border: 1.5px dashed var(--primary); border-radius: 10px; background: #eff6ff; color: var(--primary); font-weight: 700; font-size: 0.88rem; cursor: pointer; text-align: center; }
+    .photo-btn input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+    .photo-preview { display: none; margin-top: 8px; position: relative; }
+    .photo-preview img { width: 100%; max-height: 220px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border); background: #f1f5f9; }
+    .remove-photo { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); color: #fff; border: none; border-radius: 20px; padding: 4px 10px; font-size: 0.75rem; cursor: pointer; }
+
+    /* OCR 분석 상태 표시바 */
+    .ocr-status { display: none; flex-direction: column; gap: 6px; padding: 11px 12px; border-radius: 10px; background: #eff6ff; color: #1d4ed8; font-size: 0.84rem; font-weight: 700; margin-top: 10px; border: 1px solid #bfdbfe; }
+    .ocr-status.done { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+    .ocr-status.error { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+    .ocr-status-left { display: flex; align-items: center; gap: 8px; }
+    .spinner { width: 16px; height: 16px; border: 2.5px solid #93c5fd; border-top-color: #1d4ed8; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 인식된 금액 후보 칩 버튼 */
+    .amount-chips { display: none; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center; }
+    .amount-chips span { font-size: 0.76rem; color: #64748b; font-weight: 700; }
+    .chip-btn { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+    .chip-btn:hover { background: #dbeafe; }
+
+    .submit-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: #fff; font-weight: 800; font-size: 1rem; cursor: pointer; margin-top: 6px; }
+
+    /* 내역 리스트 */
+    .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .list-header h2 { font-size: 1.1rem; font-weight: 800; }
+    .util-btns { display: flex; gap: 6px; }
+    .util-btn { padding: 6px 10px; font-size: 0.78rem; font-weight: 700; border-radius: 8px; border: 1px solid var(--border); background: #fff; cursor: pointer; color: #334155; }
+    .history-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .item-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 800; white-space: nowrap; }
+    .badge.receipt { background: #dbeafe; color: #1d4ed8; }
+    .badge.transfer { background: #fef3c7; color: #b45309; }
+    .badge.sponsor { background: #dcfce7; color: #15803d; }
+    .item-info { flex: 1; }
+    .item-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .item-date { font-size: 0.78rem; color: #94a3b8; }
+    .item-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); cursor: pointer; }
+    .item-right { text-align: right; }
+    .item-amount { font-weight: 800; font-size: 1rem; }
+    .item-amount.minus { color: var(--danger); }
+    .item-amount.plus { color: var(--success); }
+    .delete-btn { background: none; border: none; color: #94a3b8; font-size: 0.75rem; cursor: pointer; margin-top: 4px; text-decoration: underline; }
+    .empty-msg { text-align: center; color: #94a3b8; padding: 30px 0; font-size: 0.9rem; }
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
+    .modal img { max-width: 100%; max-height: 85vh; border-radius: 12px; }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <h1>📋 모임 회비 정산기 <span class="ver-badge">v4.0 금액인식 패치</span></h1>
+  </div>
+
+  <!-- 1. 통장 잔액 대시보드 -->
+  <div class="dashboard">
+    <div class="base-balance-row">
+      <span>🏦 통장 기초(초기) 금액</span>
+      <div>
+        <input type="number" id="baseBalanceInput" placeholder="0" oninput="updateBaseBalance(this.value)"> 원
+      </div>
+    </div>
+    <div class="current-balance-label">실시간 통장 잔액</div>
+    <div class="current-balance-value" id="currentBalanceDisplay">0원</div>
+    <div class="summary-grid">
+      <div>영수증 지출<strong id="sumReceipt">0원</strong></div>
+      <div>계좌이체 지출<strong id="sumTransfer">0원</strong></div>
+      <div>찬조 내역<strong id="sumSponsor">0원</strong></div>
+    </div>
+  </div>
+
+  <!-- 2. 입력 탭 선택 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('receipt')">🧾 영수증 등록</button>
+    <button class="tab-btn" onclick="switchTab('transfer')">💸 계좌이체</button>
+    <button class="tab-btn" onclick="switchTab('sponsor')">🎁 찬조 등록</button>
+  </div>
+
+  <!-- 3. 입력 폼 영역 -->
+  <div class="card">
+    <!-- (1) 영수증 폼 (사용처 제거, 날짜+결제금액만 자동 인식) -->
+    <form id="form-receipt" class="form-section active" onsubmit="addReceipt(event)">
+      <div class="form-group">
+        <label>영수증 사진 첨부 (첨부 즉시 날짜·결제금액 자동 인식)</label>
+        <div class="photo-btns">
+          <div class="photo-btn">
+            📷 카메라 바로 찍기
+            <input type="file" id="camInput" accept="image/*" capture="environment" onchange="handlePhoto(event)">
+          </div>
+          <div class="photo-btn">
+            🖼️ 앨범에서 사진 선택
+            <input type="file" id="albumInput" accept="image/*" onchange="handlePhoto(event)">
+          </div>
+        </div>
+
+        <div class="photo-preview" id="photoPreviewBox">
+          <img id="photoPreviewImg" src="" alt="영수증 미리보기">
+          <button type="button" class="remove-photo" onclick="clearPhoto()">삭제 ✕</button>
+        </div>
+
+        <div class="ocr-status" id="ocrStatus">
+          <div class="ocr-status-left">
+            <div class="spinner" id="ocrSpinner"></div>
+            <span id="ocrStatusText">영수증에서 날짜와 금액을 찾는 중...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>날짜 (자동 인식)</label>
+          <input type="date" id="rDate" required>
+        </div>
+        <div class="form-group">
+          <label>시간 (자동 인식)</label>
+          <input type="time" id="rTime" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>분류 (직접 선택)</label>
+        <select id="rCategory">
+          <option value="식사">🍚 식사</option>
+          <option value="카페">☕ 카페</option>
+          <option value="장보기">🛒 장보기</option>
+          <option value="숙박/대관">🏠 숙박/대관</option>
+          <option value="주류/회식">🍺 주류/회식</option>
+          <option value="기타">🎸 기타</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>결제 금액 (자동 인식 · 통장 잔액에서 차감)</label>
+        <!-- 영수증 내 여러 금액이 발견될 경우 원터치 선택 버튼 표시 -->
+        <div class="amount-chips" id="amountChips"></div>
+        <input type="number" id="rAmount" placeholder="영수증 첨부 시 자동 입력 (원)" required>
+      </div>
+
+      <button type="submit" class="submit-btn">영수증 내역 추가 (-차감)</button>
+    </form>
+
+    <!-- (2) 계좌이체 폼 -->
+    <form id="form-transfer" class="form-section" onsubmit="addTransfer(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>이체 날짜</label>
+          <input type="date" id="tDate" required>
+        </div>
+        <div class="form-group">
+          <label>분류</label>
+          <select id="tCategory">
+            <option value="식사">🍚 식사</option>
+            <option value="카페">☕ 카페</option>
+            <option value="장보기">🛒 장보기</option>
+            <option value="숙박/대관">🏠 숙박/대관</option>
+            <option value="환불/정산">💳 환불/정산</option>
+            <option value="기타">🎸 기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>사용처 / 내역</label>
+        <input type="text" id="tPlace" placeholder="예: 펜션 선입금, 더치페이 정산" required>
+      </div>
+      <div class="form-group">
+        <label>이체 금액 (통장 잔액에서 차감)</label>
+        <input type="number" id="tAmount" placeholder="금액 입력 (원)" required>
+      </div>
+      <button type="submit" class="submit-btn">계좌이체 내역 추가 (-차감)</button>
+    </form>
+
+    <!-- (3) 찬조 폼 -->
+    <form id="form-sponsor" class="form-section" onsubmit="addSponsor(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>날짜</label>
+          <input type="date" id="sDate" required>
+        </div>
+        <div class="form-group">
+          <label>찬조자 이름</label>
+          <input type="text" id="sName" placeholder="예: 홍길동 찬조" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>잔액 반영 방식</label>
+          <select id="sSign">
+            <option value="minus">차감 (-) : 통장에서 제외</option>
+            <option value="plus">입금 (+) : 통장 잔액에 합산</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>찬조 금액</label>
+          <input type="number" id="sAmount" placeholder="금액 입력 (원)" required>
+        </div>
+      </div>
+      <button type="submit" class="submit-btn">찬조 내역 추가</button>
+    </form>
+  </div>
+
+  <!-- 4. 입출금 내역 리스트 -->
+  <div class="list-header">
+    <h2>📊 상세 정산 내역</h2>
+    <div class="util-btns">
+      <button class="util-btn" onclick="copyKakaoSummary()">💬 카톡 정산서 복사</button>
+      <button class="util-btn" onclick="exportCSV()">📥 엑셀(CSV) 저장</button>
+      <button class="util-btn" onclick="resetAll()">🗑️ 초기화</button>
+    </div>
+  </div>
+  <div id="historyList"></div>
+
+  <div class="modal" id="imgModal" onclick="this.style.display='none'">
+    <img id="modalImg" src="" alt="영수증 원본">
+  </div>
+
+  <script>
+    let state = { baseBalance: 0, items: [] };
+    let currentPhotoData = null;
+
+    window.onload = () => {
+      const saved = localStorage.getItem('club_ledger_v1');
+      if (saved) {
+        state = JSON.parse(saved);
+        document.getElementById('baseBalanceInput').value = state.baseBalance || '';
+      }
+      setDefaultDateTime();
+      render();
+    };
+
+    function setDefaultDateTime() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const today = `${yyyy}-${mm}-${dd}`;
+
+      document.getElementById('rDate').value = today;
+      document.getElementById('rTime').value = `${hh}:${min}`;
+      document.getElementById('tDate').value = today;
+      document.getElementById('sDate').value = today;
+    }
+
+    function saveState() {
+      localStorage.setItem('club_ledger_v1', JSON.stringify(state));
+      render();
+    }
+
+    function updateBaseBalance(val) {
+      state.baseBalance = Number(val) || 0;
+      saveState();
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        const targets = ['receipt', 'transfer', 'sponsor'];
+        btn.classList.toggle('active', targets[idx] === tab);
+      });
+      document.querySelectorAll('.form-section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(`form-${tab}`).classList.add('active');
+    }
+
+    // 숫자 인식률을 극대화하기 위한 이미지 전처리 (다크모드 반전 + 고해상도 대비)
+    function preprocessImageForNumbers(img) {
+      const canvas = document.createElement('canvas');
+      const maxDim = 2000;
+      const longest = Math.max(img.width, img.height);
+      const scale = longest > maxDim ? maxDim / longest : (longest < 1000 ? 1.5 : 1);
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imgData.data;
+
+      // 평균 밝기 계산 (검은 배경 다크모드 영수증 판별)
+      let sumLum = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        sumLum += (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+      }
+      const isDark = (sumLum / (d.length / 4)) < 115;
+
+      // 글자와 숫자를 선명한 검은색으로, 배경은 흰색으로 정리
+      for (let i = 0; i < d.length; i += 4) {
+        let gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        if (isDark) gray = 255 - gray;
+        // 부드러운 대비 강화 (숫자 획이 끊어지지 않도록 처리)
+        let norm = (gray - 128) * 1.6 + 128;
+        norm = Math.max(0, Math.min(255, norm));
+        d[i] = d[i + 1] = d[i + 2] = norm;
+      }
+      ctx.putImageData(imgData, 0, 0);
+      return canvas.toDataURL('image/jpeg', 0.92);
+    }
+
+    function handlePhoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const statusBox = document.getElementById('ocrStatus');
+      const statusText = document.getElementById('ocrStatusText');
+      const spinner = document.getElementById('ocrSpinner');
+      statusBox.style.display = 'flex';
+      statusBox.className = 'ocr-status';
+      spinner.style.display = 'block';
+      statusText.textContent = '영수증 숫자(날짜·금액) 스캔 중...';
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = async () => {
+          // 1. 미리보기용 썸네일 저장
+          const thumbCanvas = document.createElement('canvas');
+          const maxW = 700;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          thumbCanvas.width = img.width * scale;
+          thumbCanvas.height = img.height * scale;
+          thumbCanvas.getContext('2d').drawImage(img, 0, 0, thumbCanvas.width, thumbCanvas.height);
+          currentPhotoData = thumbCanvas.toDataURL('image/jpeg', 0.75);
+
+          document.getElementById('photoPreviewImg').src = currentPhotoData;
+          document.getElementById('photoPreviewBox').style.display = 'block';
+
+          // 2. 숫자 전용 고속 OCR 실행 ('eng' 모델이 아라비아 숫자와 기호 인식률이 훨씬 높고 빠름)
+          try {
+            const processedUrl = preprocessImageForNumbers(img);
+            const result = await Tesseract.recognize(processedUrl, 'eng', {
+              logger: m => {
+                if (m.status === 'recognizing text') {
+                  statusText.textContent = `날짜·결제금액 읽는 중... (${Math.round(m.progress * 100)}%)`;
+                }
+              }
+            });
+
+            const parsed = parseDateAndAmount(result.data.text || '');
+            applyDateAndAmount(parsed);
+          } catch (err) {
+            spinner.style.display = 'none';
+            statusBox.className = 'ocr-status error';
+            statusText.textContent = '⚠️ 자동 스캔 실패: 날짜와 금액을 직접 입력해주세요.';
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 오직 날짜, 시간, 결제금액만 정확히 뽑아내는 숫자 전용 파서
+    function parseDateAndAmount(rawText) {
+      // 흔한 숫자 오인식 교정 (O/o -> 0, l/I -> 1, S -> 5)
+      const cleaned = rawText
+        .replace(/(\d)[Oo](\d)/g, '$10$2')
+        .replace(/(\d)[Oo](\d)/g, '$10$2')
+        .replace(/(\d)[lI](\d)/g, '$11$2');
+
+      let date = null, time = null;
+
+      // 1. 시간 추출 (예: 21:58:00 또는 21:58) - 날짜와 겹치지 않도록 먼저 탐색
+      const timeRegex = /\b([01]?\d|2[0-3])\s*:\s*([0-5]\d)(?:\s*:\s*([0-5]\d))?\b/;
+      const timeMatch = cleaned.match(timeRegex);
+      if (timeMatch) {
+        time = `${String(timeMatch[1]).padStart(2, '0')}:${String(timeMatch[2]).padStart(2, '0')}`;
+      }
+
+      // 2. 날짜 추출 (예: 26.11.12, 2026.11.12, 2026-11-12, 26/11/12 등)
+      const dateRegex = /(20\d{2}|\b2\d)\s*[\.\-\/]\s*(0?[1-9]|1[0-2])\s*[\.\-\/]\s*(0?[1-9]|[12]\d|3[01])\b/;
+      const dateMatch = cleaned.match(dateRegex);
+      if (dateMatch) {
+        let yr = dateMatch[1].trim();
+        if (yr.length === 2) yr = '20' + yr;
+        const mo = String(dateMatch[2]).padStart(2, '0');
+        const dy = String(dateMatch[3]).padStart(2, '0');
+        date = `${yr}-${mo}-${dy}`;
+      }
+
+      // 3. 결제 금액 추출
+      // 날짜/시간/전화번호/사업자번호 패턴을 먼저 지워서 금액과 헷갈리지 않게 처리
+      let textForAmount = cleaned
+        .replace(/(20\d{2}|\b2\d)\s*[\.\-\/]\s*(0?[1-9]|1[0-2])\s*[\.\-\/]\s*(0?[1-9]|[12]\d|3[01])/g, ' ')
+        .replace(/\b([01]?\d|2[0-3])\s*:\s*([0-5]\d)(?:\s*:\s*([0-5]\d))?\b/g, ' ')
+        .replace(/\b0\d{1,2}\s*[\-\.\)]\s*\d{3,4}\s*[\-\.]\s*\d{4}\b/g, ' ') // 전화번호 제거
+        .replace(/\b\d{3}\s*\-\s*\d{2}\s*\-\s*\d{5}\b/g, ' '); // 사업자번호 제거
+
+      const amountSet = new Set();
+
+      // 패턴 A: 천 단위 구분 기호(콤마, 마침표, 공백)가 있는 금액 (예: 157,260 / 157.260 / 1,250,000)
+      const sepAmountRegex = /\b(\d{1,3}(?:[,\.]\d{3})+)\b/g;
+      let m;
+      while ((m = sepAmountRegex.exec(textForAmount)) !== null) {
+        const val = parseInt(m[1].replace(/[,\.]/g, ''), 10);
+        // 영수증 금액은 보통 10원 단위로 끝나고(끝자리 0) 500원 ~ 1,000만원 사이
+        if (val >= 500 && val <= 10000000 && val % 10 === 0) {
+          amountSet.add(val);
+        }
+      }
+
+      // 패턴 B: 공백으로 천 단위가 떨어진 경우 (예: 157 260)
+      const spaceAmountRegex = /\b(\d{1,3}\s\d{3})\b/g;
+      while ((m = spaceAmountRegex.exec(textForAmount)) !== null) {
+        const val = parseInt(m[1].replace(/\s/g, ''), 10);
+        if (val >= 1000 && val <= 10000000 && val % 10 === 0) {
+          amountSet.add(val);
+        }
+      }
+
+      // 패턴 C: 만약 위에서 못 찾았을 경우, 끝자리가 0으로 끝나는 4~7자리 순수 숫자 탐색
+      if (amountSet.size === 0) {
+        const plainRegex = /\b(\d{3,6}0)\b/g;
+        while ((m = plainRegex.exec(textForAmount)) !== null) {
+          const val = parseInt(m[1], 10);
+          if (val >= 1000 && val <= 5000000 && val !== 2025 && val !== 2026) {
+            amountSet.add(val);
+          }
+        }
+      }
+
+      // 큰 금액 순으로 정렬 (합계/결제금액이 공급가액이나 부가세보다 항상 크므로 1순위가 됨)
+      const amounts = Array.from(amountSet).sort((a, b) => b - a);
+      return {
+        date,
+        time,
+        bestAmount: amounts.length > 0 ? amounts[0] : null,
+        allAmounts: amounts.slice(0, 4)
+      };
+    }
+
+    function applyDateAndAmount({ date, time, bestAmount, allAmounts }) {
+      const statusBox = document.getElementById('ocrStatus');
+      const statusText = document.getElementById('ocrStatusText');
+      const spinner = document.getElementById('ocrSpinner');
+      const chipsBox = document.getElementById('amountChips');
+
+      spinner.style.display = 'none';
+      ['rDate', 'rTime', 'rAmount'].forEach(id => document.getElementById(id).classList.remove('auto-filled'));
+
+      let foundAny = false;
+      if (date) {
+        const el = document.getElementById('rDate');
+        el.value = date;
+        el.classList.add('auto-filled');
+        foundAny = true;
+      }
+      if (time) {
+        const el = document.getElementById('rTime');
+        el.value = time;
+        el.classList.add('auto-filled');
+        foundAny = true;
+      }
+      if (bestAmount) {
+        const el = document.getElementById('rAmount');
+        el.value = bestAmount;
+        el.classList.add('auto-filled');
+        foundAny = true;
+      }
+
+      // 인식된 금액 후보가 여러 개면 원터치 선택 칩 표시
+      if (allAmounts && allAmounts.length > 1) {
+        chipsBox.style.display = 'flex';
+        chipsBox.innerHTML = `<span>영수증 내 인식된 금액:</span>` +
+          allAmounts.map(amt => `<button type="button" class="chip-btn" onclick="selectAmountChip(${amt})">${amt.toLocaleString()}원</button>`).join('');
+      } else {
+        chipsBox.style.display = 'none';
+      }
+
+      if (foundAny) {
+        statusBox.className = 'ocr-status done';
+        statusText.textContent = `✅ 날짜·결제금액 자동 입력 완료! 분류만 선택해주세요.`;
+      } else {
+        statusBox.className = 'ocr-status error';
+        statusText.textContent = `⚠️ 금액을 읽지 못했습니다. 직접 입력해주세요.`;
+      }
+    }
+
+    function selectAmountChip(amt) {
+      const el = document.getElementById('rAmount');
+      el.value = amt;
+      el.classList.add('auto-filled');
+    }
+
+    function clearPhoto() {
+      currentPhotoData = null;
+      document.getElementById('camInput').value = '';
+      document.getElementById('albumInput').value = '';
+      document.getElementById('photoPreviewBox').style.display = 'none';
+      document.getElementById('photoPreviewImg').src = '';
+      document.getElementById('ocrStatus').style.display = 'none';
+      document.getElementById('amountChips').style.display = 'none';
+    }
+
+    function addReceipt(e) {
+      e.preventDefault();
+      const cat = document.getElementById('rCategory').value;
+      state.items.unshift({
+        id: Date.now(),
+        type: 'receipt',
+        date: document.getElementById('rDate').value,
+        time: document.getElementById('rTime').value,
+        category: cat,
+        title: cat, // 사용처 칸을 없앴으므로 분류명을 제목으로 사용
+        amount: Number(document.getElementById('rAmount').value),
+        sign: 'minus',
+        photo: currentPhotoData
+      });
+      document.getElementById('rAmount').value = '';
+      ['rDate', 'rTime', 'rAmount'].forEach(id => document.getElementById(id).classList.remove('auto-filled'));
+      clearPhoto();
+      saveState();
+    }
+
+    function addTransfer(e) {
+      e.preventDefault();
+      state.items.unshift({
+        id: Date.now(),
+        type: 'transfer',
+        date: document.getElementById('tDate').value,
+        time: '',
+        category: document.getElementById('tCategory').value,
+        title: document.getElementById('tPlace').value,
+        amount: Number(document.getElementById('tAmount').value),
+        sign: 'minus',
+        photo: null
+      });
+      document.getElementById('tPlace').value = '';
+      document.getElementById('tAmount').value = '';
+      saveState();
+    }
+
+    function addSponsor(e) {
+      e.preventDefault();
+      state.items.unshift({
+        id: Date.now(),
+        type: 'sponsor',
+        date: document.getElementById('sDate').value,
+        time: '',
+        category: '찬조',
+        title: document.getElementById('sName').value,
+        amount: Number(document.getElementById('sAmount').value),
+        sign: document.getElementById('sSign').value,
+        photo: null
+      });
+      document.getElementById('sName').value = '';
+      document.getElementById('sAmount').value = '';
+      saveState();
+    }
+
+    function deleteItem(id) {
+      if (!confirm('이 내역을 삭제하시겠습니까?')) return;
+      state.items = state.items.filter(item => item.id !== id);
+      saveState();
+    }
+
+    function showModal(src) {
+      document.getElementById('modalImg').src = src;
+      document.getElementById('imgModal').style.display = 'flex';
+    }
+
+    function render() {
+      let receiptSum = 0, transferSum = 0, sponsorNet = 0;
+      let currentBalance = state.baseBalance;
+
+      state.items.forEach(item => {
+        if (item.type === 'receipt') {
+          receiptSum += item.amount;
+          currentBalance -= item.amount;
+        } else if (item.type === 'transfer') {
+          transferSum += item.amount;
+          currentBalance -= item.amount;
+        } else if (item.type === 'sponsor') {
+          if (item.sign === 'plus') {
+            sponsorNet += item.amount;
+            currentBalance += item.amount;
+          } else {
+            sponsorNet -= item.amount;
+            currentBalance -= item.amount;
+          }
+        }
+      });
+
+      document.getElementById('currentBalanceDisplay').textContent = currentBalance.toLocaleString() + '원';
+      document.getElementById('sumReceipt').textContent = '-' + receiptSum.toLocaleString() + '원';
+      document.getElementById('sumTransfer').textContent = '-' + transferSum.toLocaleString() + '원';
+      document.getElementById('sumSponsor').textContent = (sponsorNet >= 0 ? '+' : '') + sponsorNet.toLocaleString() + '원';
+
+      const listEl = document.getElementById('historyList');
+      if (state.items.length === 0) {
+        listEl.innerHTML = '<div class="empty-msg">아직 등록된 회비 내역이 없습니다.</div>';
+        return;
+      }
+
+      listEl.innerHTML = state.items.map(item => {
+        const badgeMap = {
+          receipt: '<span class="badge receipt">영수증</span>',
+          transfer: '<span class="badge transfer">계좌이체</span>',
+          sponsor: '<span class="badge sponsor">찬조</span>'
+        };
+        const signChar = item.sign === 'plus' ? '+' : '-';
+        const photoHtml = item.photo ? `<img src="${item.photo}" class="item-thumb" onclick="showModal('${item.photo}')" title="영수증 보기">` : '';
+        const displayTitle = item.type === 'receipt' ? `${item.category} 지출` : `${item.title} (${item.category})`;
+
+        return `
+          <div class="history-item">
+            <div class="item-left">
+              ${photoHtml}
+              <div class="item-info">
+                <div class="item-title">
+                  ${badgeMap[item.type]}
+                  <span>${displayTitle}</span>
+                </div>
+                <div class="item-date">${item.date} ${item.time || ''}</div>
+              </div>
+            </div>
+            <div class="item-right">
+              <div class="item-amount ${item.sign}">${signChar}${item.amount.toLocaleString()}원</div>
+              <button class="delete-btn" onclick="deleteItem(${item.id})">삭제</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function copyKakaoSummary() {
+      let currentBalance = state.baseBalance;
+      const lines = ['📋 [모임 회비 정산 내역]', `• 기초 통장 잔액: ${state.baseBalance.toLocaleString()}원`, ''];
+
+      [...state.items].reverse().forEach(item => {
+        const sign = item.sign === 'plus' ? '+' : '-';
+        currentBalance += (item.sign === 'plus' ? item.amount : -item.amount);
+        const typeLabel = item.type === 'receipt' ? `영수증/${item.category}` : (item.type === 'transfer' ? `계좌이체/${item.category} - ${item.title}` : `찬조 - ${item.title}`);
+        lines.push(`[${item.date}${item.time ? ' ' + item.time : ''}] ${typeLabel}: ${sign}${item.amount.toLocaleString()}원`);
+      });
+
+      lines.push('', `💰 현재 통장 잔액: ${currentBalance.toLocaleString()}원`);
+      navigator.clipboard.writeText(lines.join('\n')).then(() => {
+        alert('카카오톡 공유용 정산 내역이 클립보드에 복사되었습니다!');
+      });
+    }
+
+    function exportCSV() {
+      let csv = '\uFEFF구분,날짜,시간,분류,상세내역,차감/입금,금액\n';
+      state.items.forEach(item => {
+        const typeLabel = item.type === 'receipt' ? '영수증' : (item.type === 'transfer' ? '계좌이체' : '찬조');
+        const signAmount = (item.sign === 'plus' ? '' : '-') + item.amount;
+        csv += `${typeLabel},${item.date},${item.time || '-'},${item.category},"${item.title}",${item.sign === 'plus' ? '입금(+)' : '차감(-)'},${signAmount}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `모임회비정산_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+    }
+
+    function resetAll() {
+      if (!confirm('모든 회비 내역을 초기화하시겠습니까?')) return;
+      state = { baseBalance: 0, items: [] };
+      document.getElementById('baseBalanceInput').value = '';
+      saveState();
+    }
+  </script>
+</body>
+</html>
